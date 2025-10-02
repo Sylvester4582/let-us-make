@@ -51,6 +51,11 @@ All colors MUST be HSL.
     --shadow-success: 0 8px 24px hsla(145 65% 50% / 0.25);
     
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Gamification specific */
+    --glow-primary: 0 0 20px hsla(195 85% 45% / 0.5);
+    --glow-success: 0 0 20px hsla(145 65% 50% / 0.5);
+    --glow-accent: 0 0 20px hsla(280 70% 60% / 0.5);
 
     --sidebar-background: 0 0% 98%;
 
@@ -128,4 +133,17 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s infinite;
 }

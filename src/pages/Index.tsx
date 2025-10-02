@@ -4,6 +4,9 @@ import { LevelProgress } from "@/components/LevelProgress";
 import { ActionCard } from "@/components/ActionCard";
 import { ChallengeCard } from "@/components/ChallengeCard";
 import { LeaderboardCard } from "@/components/LeaderboardCard";
+import { BadgeShowcase } from "@/components/BadgeShowcase";
+import { DailyRewardCard } from "@/components/DailyRewardCard";
+import { PointsAnimation } from "@/components/PointsAnimation";
 import { 
   Award, 
   Flame, 
@@ -13,7 +16,8 @@ import {
   FileText, 
   Users, 
   Share2,
-  Activity
+  Activity,
+  Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,12 +28,20 @@ const Index = () => {
     streak: 7,
     levelTitle: "Advocate",
   });
+  const [showPointsAnimation, setShowPointsAnimation] = useState(false);
+  const [animatedPoints, setAnimatedPoints] = useState(0);
 
   const handleActivityLog = (activityName: string, points: number) => {
     setUserData(prev => ({ ...prev, points: prev.points + points }));
-    toast.success(`+${points} points earned!`, {
-      description: `Great job logging your ${activityName}!`,
+    setAnimatedPoints(points);
+    setShowPointsAnimation(true);
+    
+    toast.success(`🎉 +${points} points earned!`, {
+      description: `Amazing! You just logged your ${activityName}!`,
+      duration: 3000,
     });
+
+    setTimeout(() => setShowPointsAnimation(false), 2000);
   };
 
   const mockLeaderboard = [
@@ -42,18 +54,22 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Points Animation Overlay */}
+      <PointsAnimation points={animatedPoints} show={showPointsAnimation} />
+
       {/* Header */}
-      <header className="bg-card border-b border-border shadow-sm">
+      <header className="bg-gradient-hero text-white shadow-lg sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-primary rounded-xl">
-                <Activity className="w-6 h-6 text-white" />
+              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm animate-bounce-subtle">
+                <Activity className="w-6 h-6" />
               </div>
               <h1 className="text-2xl font-bold">YouMatter</h1>
             </div>
             <div className="flex items-center gap-4">
-              <div className="px-4 py-2 bg-muted rounded-full text-sm font-medium">
+              <div className="px-4 py-2 bg-white/20 rounded-full text-sm font-medium backdrop-blur-sm flex items-center gap-2">
+                <Sparkles className="w-4 h-4 animate-pulse" />
                 👋 Welcome back, User!
               </div>
             </div>
@@ -64,7 +80,7 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         {/* Level Progress - Hero Section */}
-        <div className="mb-8">
+        <div className="mb-8 animate-fade-in">
           <LevelProgress
             level={userData.level}
             currentPoints={userData.points % 300}
@@ -73,8 +89,13 @@ const Index = () => {
           />
         </div>
 
+        {/* Daily Reward */}
+        <div className="mb-8 animate-slide-up">
+          <DailyRewardCard onClaim={(points) => handleActivityLog("daily reward", points)} />
+        </div>
+
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-fade-in" style={{ animationDelay: "0.1s" }}>
           <StatsCard
             icon={Zap}
             label="Total Points"
@@ -102,8 +123,13 @@ const Index = () => {
           {/* Left Column - Actions and Challenges */}
           <div className="lg:col-span-2 space-y-8">
             {/* Quick Actions */}
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Earn Points</h2>
+            <section className="animate-fade-in" style={{ animationDelay: "0.2s" }}>
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-2xl font-bold">Earn Points</h2>
+                <div className="px-3 py-1 bg-success/10 text-success rounded-full text-xs font-bold animate-pulse">
+                  Click to earn! 🎯
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ActionCard
                   icon={Dumbbell}
@@ -141,8 +167,13 @@ const Index = () => {
             </section>
 
             {/* Active Challenges */}
-            <section>
-              <h2 className="text-2xl font-bold mb-4">Active Challenges</h2>
+            <section className="animate-fade-in" style={{ animationDelay: "0.3s" }}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Active Challenges</h2>
+                <div className="px-3 py-1 bg-accent/10 text-accent rounded-full text-xs font-bold">
+                  🏆 Complete for bonus points!
+                </div>
+              </div>
               <div className="space-y-4">
                 <ChallengeCard
                   title="Workout Warrior"
@@ -172,49 +203,60 @@ const Index = () => {
             </section>
           </div>
 
-          {/* Right Column - Leaderboard */}
-          <div className="lg:col-span-1">
-            <LeaderboardCard 
-              entries={mockLeaderboard}
-              currentUserRank={4}
-            />
+          {/* Right Column - Leaderboard & Badges */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="animate-fade-in" style={{ animationDelay: "0.4s" }}>
+              <LeaderboardCard 
+                entries={mockLeaderboard}
+                currentUserRank={4}
+              />
+            </div>
+            
+            <div className="animate-fade-in" style={{ animationDelay: "0.5s" }}>
+              <BadgeShowcase />
+            </div>
           </div>
         </div>
 
         {/* Achievement Showcase */}
-        <section className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Your Benefits</h2>
+        <section className="mt-8 animate-fade-in" style={{ animationDelay: "0.6s" }}>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-2xl font-bold">Your Benefits</h2>
+            <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold animate-pulse">
+              🎁 Unlock more rewards!
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-6 bg-card rounded-xl shadow-card border-2 border-success">
+            <div className="p-6 bg-card rounded-xl shadow-card border-2 border-success hover:scale-105 transition-all cursor-pointer group animate-pulse-success">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-success/10 rounded-lg">
+                <div className="p-2 bg-success/10 rounded-lg group-hover:animate-bounce-subtle">
                   <Award className="w-5 h-5 text-success" />
                 </div>
                 <h3 className="font-semibold">Premium Discount</h3>
               </div>
-              <p className="text-2xl font-bold text-success mb-1">10% OFF</p>
-              <p className="text-sm text-muted-foreground">Unlocked at Level 3</p>
+              <p className="text-3xl font-bold text-success mb-1 group-hover:scale-110 transition-transform">10% OFF</p>
+              <p className="text-sm text-muted-foreground">✓ Unlocked at Level 3</p>
             </div>
 
-            <div className="p-6 bg-card rounded-xl shadow-card">
+            <div className="p-6 bg-card rounded-xl shadow-card border-2 border-dashed border-muted hover:scale-105 transition-all cursor-pointer group">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-muted rounded-lg">
+                <div className="p-2 bg-muted rounded-lg group-hover:animate-bounce-subtle">
                   <Share2 className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <h3 className="font-semibold text-muted-foreground">Next Unlock</h3>
               </div>
-              <p className="text-2xl font-bold mb-1">20% OFF</p>
+              <p className="text-3xl font-bold mb-1 group-hover:scale-110 transition-transform">20% OFF</p>
               <p className="text-sm text-muted-foreground">Reach Level 4 (315 points to go)</p>
             </div>
 
-            <div className="p-6 bg-card rounded-xl shadow-card">
+            <div className="p-6 bg-card rounded-xl shadow-card border-2 border-dashed border-muted hover:scale-105 transition-all cursor-pointer group">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-muted rounded-lg">
+                <div className="p-2 bg-muted rounded-lg group-hover:animate-bounce-subtle">
                   <Zap className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <h3 className="font-semibold text-muted-foreground">Final Unlock</h3>
               </div>
-              <p className="text-2xl font-bold mb-1">30% OFF</p>
+              <p className="text-3xl font-bold mb-1 group-hover:scale-110 transition-transform">30% OFF</p>
               <p className="text-sm text-muted-foreground">Reach Level 5 (Master)</p>
             </div>
           </div>
