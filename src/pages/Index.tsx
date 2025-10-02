@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { useUser } from "@/hooks/useUser";
+import { useLeaderboard } from "@/hooks/useLeaderboard";
+import { useAI } from "@/hooks/useAI";
+import { useAuth } from "@/hooks/useAuth";
 import { StatsCard } from "@/components/StatsCard";
 import { LevelProgress } from "@/components/LevelProgress";
 import { ActionCard } from "@/components/ActionCard";
@@ -7,6 +11,13 @@ import { LeaderboardCard } from "@/components/LeaderboardCard";
 import { BadgeShowcase } from "@/components/BadgeShowcase";
 import { DailyRewardCard } from "@/components/DailyRewardCard";
 import { PointsAnimation } from "@/components/PointsAnimation";
+import { AIMotivationCard } from "@/components/AIMotivationCard";
+import { AIPredictiveChallenges } from "@/components/AIPredictiveChallenges";
+import { AIRecommendationsPanel } from "@/components/AIRecommendationsPanel";
+import { AIUserProfileInsights } from "@/components/AIUserProfileInsights";
+import { BenefitsCard } from "@/components/BenefitsCard";
+import { Button } from "@/components/ui/button";
+import { EventType } from "@/services/eventService";
 import { 
   Award, 
   Flame, 
@@ -17,40 +28,91 @@ import {
   Users, 
   Share2,
   Activity,
-  Sparkles
+  Sparkles,
+  Brain,
+  LogOut,
+  User
 } from "lucide-react";
 import { toast } from "sonner";
 
 const Index = () => {
-  const [userData, setUserData] = useState({
-    points: 285,
-    level: 3,
-    streak: 7,
-    levelTitle: "Advocate",
-  });
+  const { userData, updatePoints, calculateLevel, resetUserData, logEvent } = useUser();
+  const { leaderboard, currentUserRank, isLoading: leaderboardLoading } = useLeaderboard();
+  const { logActivity } = useAI();
+  const { user, logout, isAuthenticated } = useAuth();
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [animatedPoints, setAnimatedPoints] = useState(0);
 
-  const handleActivityLog = (activityName: string, points: number) => {
-    setUserData(prev => ({ ...prev, points: prev.points + points }));
-    setAnimatedPoints(points);
-    setShowPointsAnimation(true);
+  // Calculate points needed for next level
+  const getLevelProgress = () => {
+    const LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000, 1500];
+    const currentLevel = userData.level;
     
-    toast.success(`🎉 +${points} points earned!`, {
-      description: `Amazing! You just logged your ${activityName}!`,
-      duration: 3000,
+    if (currentLevel >= 5) {
+      return { currentPoints: 0, pointsToNextLevel: 1, progress: 100 };
+    }
+    
+    const currentThreshold = LEVEL_THRESHOLDS[currentLevel - 1] || 0;
+    const nextThreshold = LEVEL_THRESHOLDS[currentLevel] || 1500;
+    const currentPoints = userData.points - currentThreshold;
+    const pointsToNextLevel = nextThreshold - currentThreshold;
+    
+    return { currentPoints, pointsToNextLevel };
+  };
+
+  const levelProgress = getLevelProgress();
+
+  const handleActivityLog = async (activityName: string, eventType: EventType, fallbackPoints: number) => {
+    // Try to log event via backend first
+    const response = await logEvent(eventType);
+    
+    if (response && response.success && response.data) {
+      // Backend event logged successfully
+      setAnimatedPoints(response.data.pointsAwarded);
+      setShowPointsAnimation(true);
+      
+      // Show level up message if applicable
+      if (response.data.levelUp) {
+        toast.success(`🎉 Level Up! Welcome to Level ${response.data.newLevel}!`, {
+          description: response.data.message,
+          duration: 5000,
+        });
+      } else {
+        toast.success(`🎉 +${response.data.pointsAwarded} points earned!`, {
+          description: response.data.message,
+          duration: 3000,
+        });
+      }
+      
+      // Show premium unlock notification
+      if (response.data.unlockedPremiumDiscount) {
+        toast.success(`🌟 Premium Unlocked! ${response.data.discountPercentage}% discount available!`, {
+          description: "You've unlocked premium features and discounts!",
+          duration: 5000,
+        });
+      }
+    } else {
+      // Fallback to local points update
+      await updatePoints(fallbackPoints);
+      setAnimatedPoints(fallbackPoints);
+      setShowPointsAnimation(true);
+      
+      toast.success(`🎉 +${fallbackPoints} points earned!`, {
+        description: `Amazing! You just logged your ${activityName}!`,
+        duration: 3000,
+      });
+    }
+    
+    // Log activity for AI analysis
+    logActivity({
+      id: `activity-${Date.now()}`,
+      type: activityName,
+      timestamp: new Date(),
+      points: response?.data?.pointsAwarded || fallbackPoints
     });
 
     setTimeout(() => setShowPointsAnimation(false), 2000);
   };
-
-  const mockLeaderboard = [
-    { rank: 1, username: "Sarah Chen", points: 1245, level: 5 },
-    { rank: 2, username: "Mike Johnson", points: 987, level: 4 },
-    { rank: 3, username: "Emma Davis", points: 756, level: 4 },
-    { rank: 4, username: "You", points: 285, level: 3 },
-    { rank: 5, username: "Alex Kumar", points: 234, level: 2 },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,8 +132,21 @@ const Index = () => {
             <div className="flex items-center gap-4">
               <div className="px-4 py-2 bg-white/20 rounded-full text-sm font-medium backdrop-blur-sm flex items-center gap-2">
                 <Sparkles className="w-4 h-4 animate-pulse" />
-                👋 Welcome back, User!
+                👋 Welcome back, {isAuthenticated ? user?.username : userData.username}!
               </div>
+              {isAuthenticated && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={logout}
+                    className="text-white hover:bg-white/20"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -83,15 +158,15 @@ const Index = () => {
         <div className="mb-8 animate-fade-in">
           <LevelProgress
             level={userData.level}
-            currentPoints={userData.points % 300}
-            pointsToNextLevel={300}
+            currentPoints={levelProgress.currentPoints}
+            pointsToNextLevel={levelProgress.pointsToNextLevel}
             levelTitle={userData.levelTitle}
           />
         </div>
 
         {/* Daily Reward */}
         <div className="mb-8 animate-slide-up">
-          <DailyRewardCard onClaim={(points) => handleActivityLog("daily reward", points)} />
+          <DailyRewardCard onClaim={(points) => handleActivityLog("daily reward", EventType.DAILY_LOGIN, points)} />
         </div>
 
         {/* Stats Overview */}
@@ -118,6 +193,29 @@ const Index = () => {
           />
         </div>
 
+        {/* AI-Powered Features Section */}
+        <section className="mb-8 animate-fade-in" style={{ animationDelay: "0.15s" }}>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg">
+              <Brain className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">AI-Powered Insights</h2>
+              <p className="text-sm text-muted-foreground">Personalized recommendations just for you</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <AIMotivationCard />
+            <AIUserProfileInsights />
+          </div>
+          
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <AIPredictiveChallenges />
+            <AIRecommendationsPanel />
+          </div>
+        </section>
+
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Actions and Challenges */}
@@ -136,7 +234,7 @@ const Index = () => {
                   title="Log Workout"
                   description="Record your fitness activity"
                   points={10}
-                  onClick={() => handleActivityLog("workout", 10)}
+                  onClick={() => handleActivityLog("workout", EventType.LOG_WORKOUT, 10)}
                   color="primary"
                 />
                 <ActionCard
@@ -144,7 +242,7 @@ const Index = () => {
                   title="Read Article"
                   description="Learn about wellness"
                   points={7}
-                  onClick={() => handleActivityLog("article", 7)}
+                  onClick={() => handleActivityLog("article", EventType.READ_ARTICLE, 7)}
                   color="secondary"
                 />
                 <ActionCard
@@ -152,7 +250,7 @@ const Index = () => {
                   title="View Policy"
                   description="Check your insurance details"
                   points={15}
-                  onClick={() => handleActivityLog("policy review", 15)}
+                  onClick={() => handleActivityLog("policy review", EventType.VIEW_POLICY, 15)}
                   color="accent"
                 />
                 <ActionCard
@@ -160,7 +258,7 @@ const Index = () => {
                   title="Invite Friend"
                   description="Share YouMatter with others"
                   points={20}
-                  onClick={() => handleActivityLog("friend invite", 20)}
+                  onClick={() => handleActivityLog("friend invite", EventType.INVITE_FRIEND, 20)}
                   color="success"
                 />
               </div>
@@ -207,8 +305,9 @@ const Index = () => {
           <div className="lg:col-span-1 space-y-6">
             <div className="animate-fade-in" style={{ animationDelay: "0.4s" }}>
               <LeaderboardCard 
-                entries={mockLeaderboard}
-                currentUserRank={4}
+                entries={leaderboard}
+                currentUserRank={currentUserRank}
+                isLoading={leaderboardLoading}
               />
             </div>
             
@@ -218,47 +317,25 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Achievement Showcase */}
+        {/* Benefits Section */}
         <section className="mt-8 animate-fade-in" style={{ animationDelay: "0.6s" }}>
-          <div className="flex items-center gap-3 mb-4">
-            <h2 className="text-2xl font-bold">Your Benefits</h2>
-            <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold animate-pulse">
-              🎁 Unlock more rewards!
-            </div>
+          <BenefitsCard />
+        </section>
+
+        {/* Debug Panel - Remove in production */}
+        <section className="mt-8 p-4 bg-muted rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-muted-foreground">Debug Panel</h3>
+            <button 
+              onClick={resetUserData}
+              className="px-3 py-1 bg-destructive text-destructive-foreground rounded text-xs hover:bg-destructive/90"
+            >
+              Reset Data
+            </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-6 bg-card rounded-xl shadow-card border-2 border-success hover:scale-105 transition-all cursor-pointer group animate-pulse-success">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-success/10 rounded-lg group-hover:animate-bounce-subtle">
-                  <Award className="w-5 h-5 text-success" />
-                </div>
-                <h3 className="font-semibold">Premium Discount</h3>
-              </div>
-              <p className="text-3xl font-bold text-success mb-1 group-hover:scale-110 transition-transform">10% OFF</p>
-              <p className="text-sm text-muted-foreground">✓ Unlocked at Level 3</p>
-            </div>
-
-            <div className="p-6 bg-card rounded-xl shadow-card border-2 border-dashed border-muted hover:scale-105 transition-all cursor-pointer group">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-muted rounded-lg group-hover:animate-bounce-subtle">
-                  <Share2 className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <h3 className="font-semibold text-muted-foreground">Next Unlock</h3>
-              </div>
-              <p className="text-3xl font-bold mb-1 group-hover:scale-110 transition-transform">20% OFF</p>
-              <p className="text-sm text-muted-foreground">Reach Level 4 (315 points to go)</p>
-            </div>
-
-            <div className="p-6 bg-card rounded-xl shadow-card border-2 border-dashed border-muted hover:scale-105 transition-all cursor-pointer group">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-muted rounded-lg group-hover:animate-bounce-subtle">
-                  <Zap className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <h3 className="font-semibold text-muted-foreground">Final Unlock</h3>
-              </div>
-              <p className="text-3xl font-bold mb-1 group-hover:scale-110 transition-transform">30% OFF</p>
-              <p className="text-sm text-muted-foreground">Reach Level 5 (Master)</p>
-            </div>
+          <div className="text-xs text-muted-foreground">
+            <p>Stored Points: {userData.points} | Level: {userData.level} ({userData.levelTitle})</p>
+            <p>Data persists across page refreshes via localStorage</p>
           </div>
         </section>
       </main>

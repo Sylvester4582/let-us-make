@@ -1,19 +1,53 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Gift, Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface DailyRewardCardProps {
   onClaim: (points: number) => void;
 }
 
+const DAILY_REWARD_KEY = 'youmatter_daily_reward';
+
+const getTodayKey = () => {
+  return new Date().toDateString();
+};
+
+const hasClaimedToday = () => {
+  try {
+    const saved = localStorage.getItem(DAILY_REWARD_KEY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      return data.date === getTodayKey();
+    }
+  } catch (error) {
+    console.warn('Could not check daily reward status:', error);
+  }
+  return false;
+};
+
+const markAsClaimedToday = () => {
+  try {
+    localStorage.setItem(DAILY_REWARD_KEY, JSON.stringify({
+      date: getTodayKey(),
+      claimed: true
+    }));
+  } catch (error) {
+    console.warn('Could not save daily reward status:', error);
+  }
+};
+
 export const DailyRewardCard = ({ onClaim }: DailyRewardCardProps) => {
   const [claimed, setClaimed] = useState(false);
 
+  useEffect(() => {
+    setClaimed(hasClaimedToday());
+  }, []);
+
   const handleClaim = () => {
     setClaimed(true);
+    markAsClaimedToday();
     onClaim(50);
-    setTimeout(() => setClaimed(false), 3000);
   };
 
   return (
@@ -52,12 +86,18 @@ export const DailyRewardCard = ({ onClaim }: DailyRewardCardProps) => {
               : "bg-gradient-to-r from-accent to-secondary hover:opacity-90 animate-pulse"
           }`}
         >
-          {claimed ? "✓ Claimed!" : "🎁 Claim Now"}
+          {claimed ? "✓ Claimed Today!" : "🎁 Claim Now"}
         </Button>
 
         {!claimed && (
           <p className="text-xs text-center text-muted-foreground mt-2">
-            Available for the next 12 hours
+            Available once per day
+          </p>
+        )}
+        
+        {claimed && (
+          <p className="text-xs text-center text-muted-foreground mt-2">
+            Come back tomorrow for another reward!
           </p>
         )}
       </div>
