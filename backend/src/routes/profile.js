@@ -210,4 +210,51 @@ router.get('/risk-assessment', authenticateToken, async (req, res) => {
     }
 });
 
+// Add points to user (for daily challenges)
+router.post('/add-points', 
+    authenticateToken,
+    [
+        body('points').isInt({ min: 1, max: 1000 }).withMessage('Points must be between 1 and 1000')
+    ],
+    async (req, res) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Validation failed',
+                    errors: errors.array().map(err => err.msg)
+                });
+            }
+
+            const { points } = req.body;
+            const userId = req.user.id;
+
+            // Import User model
+            const User = require('../models/User');
+            
+            // Update user points using the existing method
+            const updatedUser = await User.updatePoints(userId, points);
+
+            res.json({
+                success: true,
+                data: {
+                    totalPoints: updatedUser.points,
+                    level: updatedUser.level,
+                    pointsAdded: points
+                },
+                message: `Successfully added ${points} points`
+            });
+
+        } catch (error) {
+            console.error('Error adding points:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to add points',
+                errors: [error.message]
+            });
+        }
+    }
+);
+
 module.exports = router;

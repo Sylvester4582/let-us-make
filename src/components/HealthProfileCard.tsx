@@ -6,7 +6,7 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
 import { useUser } from '@/contexts/UserContext';
-import { User, Scale, Ruler, Calendar, Save, Edit3 } from 'lucide-react';
+import { User, Scale, Ruler, Calendar, Save, Edit3, Target } from 'lucide-react';
 
 export const HealthProfileCard: React.FC = () => {
   const { userData, updateHealthProfile } = useUser();
@@ -15,7 +15,9 @@ export const HealthProfileCard: React.FC = () => {
     age: userData.healthProfile.age || '',
     height: userData.healthProfile.height || '',
     weight: userData.healthProfile.weight || '',
-    gender: userData.healthProfile.gender || 'other'
+    gender: userData.healthProfile.gender || 'other',
+    targetWeight: userData.healthProfile.targetWeight || '',
+    fitnessLevel: userData.healthProfile.fitnessLevel || 'beginner'
   });
 
   const handleSave = async () => {
@@ -23,7 +25,9 @@ export const HealthProfileCard: React.FC = () => {
       age: formData.age ? parseInt(formData.age.toString()) : undefined,
       height: formData.height ? parseInt(formData.height.toString()) : undefined,
       weight: formData.weight ? parseInt(formData.weight.toString()) : undefined,
-      gender: formData.gender as 'male' | 'female' | 'other'
+      gender: formData.gender as 'male' | 'female' | 'other',
+      targetWeight: formData.targetWeight ? parseInt(formData.targetWeight.toString()) : undefined,
+      fitnessLevel: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced'
     };
 
     await updateHealthProfile(healthData);
@@ -35,7 +39,9 @@ export const HealthProfileCard: React.FC = () => {
       age: userData.healthProfile.age || '',
       height: userData.healthProfile.height || '',
       weight: userData.healthProfile.weight || '',
-      gender: userData.healthProfile.gender || 'other'
+      gender: userData.healthProfile.gender || 'other',
+      targetWeight: userData.healthProfile.targetWeight || '',
+      fitnessLevel: userData.healthProfile.fitnessLevel || 'beginner'
     });
     setIsEditing(false);
   };
@@ -154,6 +160,46 @@ export const HealthProfileCard: React.FC = () => {
               </div>
             </div>
 
+            {/* Fitness Goals Section */}
+            <div className="border-t pt-4 mt-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Fitness Goals</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="targetWeight">Target Weight (kg)</Label>
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-gray-500" />
+                    <Input
+                      id="targetWeight"
+                      type="number"
+                      placeholder="65"
+                      value={formData.targetWeight}
+                      onChange={(e) => setFormData(prev => ({ ...prev, targetWeight: e.target.value }))}
+                      min="30"
+                      max="300"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="fitnessLevel">Fitness Level</Label>
+                  <Select 
+                    value={formData.fitnessLevel} 
+                    onValueChange={(value: 'beginner' | 'intermediate' | 'advanced') => 
+                      setFormData(prev => ({ ...prev, fitnessLevel: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">Beginner</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSave} className="flex items-center gap-2">
                 <Save className="h-4 w-4" />
@@ -222,6 +268,54 @@ export const HealthProfileCard: React.FC = () => {
                     {getBMIStatus(parseFloat(calculateBMI()!)).label}
                   </Badge>
                 </div>
+              </div>
+            )}
+
+            {/* Fitness Goals Display */}
+            {userData.healthProfile.hasCompletedFitnessSetup && (
+              <div className="border-t pt-4 mt-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Fitness Goals</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {userData.healthProfile.targetWeight && (
+                    <div className="p-3 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Target className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium">Target Weight</span>
+                      </div>
+                      <p className="text-lg font-bold">
+                        {userData.healthProfile.targetWeight} kg
+                      </p>
+                    </div>
+                  )}
+                  {userData.healthProfile.fitnessLevel && (
+                    <div className="p-3 bg-purple-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <User className="h-4 w-4 text-purple-600" />
+                        <span className="text-sm font-medium">Fitness Level</span>
+                      </div>
+                      <p className="text-lg font-bold capitalize">
+                        {userData.healthProfile.fitnessLevel}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {userData.healthProfile.preferredExerciseTypes && userData.healthProfile.preferredExerciseTypes.length > 0 && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm font-medium text-gray-700">Preferred Exercises:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {userData.healthProfile.preferredExerciseTypes.slice(0, 3).map((type, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {type.replace('_', ' ')}
+                        </Badge>
+                      ))}
+                      {userData.healthProfile.preferredExerciseTypes.length > 3 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{userData.healthProfile.preferredExerciseTypes.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

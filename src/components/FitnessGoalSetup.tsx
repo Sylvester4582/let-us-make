@@ -52,28 +52,34 @@ export const FitnessGoalSetup: React.FC<FitnessGoalSetupProps> = ({
   onGoalSet, 
   existingGoal 
 }) => {
-  const { userData } = useUser();
+  const { userData, updateHealthProfile } = useUser();
+  
+  // Use health profile data as the source of truth
   const [goalType, setGoalType] = useState<string>(
-    existingGoal?.type || 'general_fitness'
+    userData.healthProfile.fitnessGoalType || existingGoal?.type || 'general_fitness'
   );
   const [currentWeight, setCurrentWeight] = useState<string>(
-    existingGoal?.currentWeight?.toString() || ''
+    userData.healthProfile.weight?.toString() || existingGoal?.currentWeight?.toString() || ''
   );
   const [targetWeight, setTargetWeight] = useState<string>(
-    existingGoal?.targetWeight?.toString() || ''
+    userData.healthProfile.targetWeight?.toString() || existingGoal?.targetWeight?.toString() || ''
   );
-  const [height, setHeight] = useState<string>('1.70'); // Default height in meters
+  const [height, setHeight] = useState<string>(
+    userData.healthProfile.height ? (userData.healthProfile.height / 100).toString() : '1.70'
+  );
   const [fitnessLevel, setFitnessLevel] = useState<string>(
-    existingGoal?.fitnessLevel || 'beginner'
+    userData.healthProfile.fitnessLevel || existingGoal?.fitnessLevel || 'beginner'
   );
   const [availableTime, setAvailableTime] = useState<number[]>(
-    [existingGoal?.availableTime || 30]
+    [userData.healthProfile.availableTimePerDay || existingGoal?.availableTime || 30]
   );
   const [daysPerWeek, setDaysPerWeek] = useState<number[]>(
-    [existingGoal?.daysPerWeek || 5]
+    [userData.healthProfile.workoutDaysPerWeek || existingGoal?.daysPerWeek || 3]
   );
   const [selectedExerciseTypes, setSelectedExerciseTypes] = useState<ExerciseType[]>(
-    existingGoal?.preferredExerciseTypes || []
+    userData.healthProfile.preferredExerciseTypes?.map(type => type as ExerciseType) || 
+    existingGoal?.preferredExerciseTypes || 
+    []
   );
 
   const handleExerciseTypeToggle = (type: ExerciseType) => {
@@ -88,7 +94,7 @@ export const FitnessGoalSetup: React.FC<FitnessGoalSetupProps> = ({
     return weight / (height * height);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!currentWeight || selectedExerciseTypes.length === 0) {
       alert('Please fill in all required fields');
       return;
@@ -101,6 +107,25 @@ export const FitnessGoalSetup: React.FC<FitnessGoalSetupProps> = ({
       ? FitnessService.getTargetBMI(currentBMI, goalType)
       : currentBMI;
 
+    // Update the shared health profile with fitness data
+    const healthProfileUpdate = {
+      weight: weight,
+      height: Math.round(heightInMeters * 100), // Convert back to cm
+      targetWeight: targetWeight ? parseFloat(targetWeight) : undefined,
+      fitnessLevel: fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
+      fitnessGoalType: goalType as 'weight_loss' | 'muscle_gain' | 'endurance' | 'strength' | 'general_fitness',
+      preferredExerciseTypes: selectedExerciseTypes.map(type => type as string),
+      availableTimePerDay: availableTime[0],
+      workoutDaysPerWeek: daysPerWeek[0],
+      hasCompletedFitnessSetup: true,
+      fitnessGoalCreatedAt: userData.healthProfile.fitnessGoalCreatedAt || new Date().toISOString(),
+      fitnessGoalUpdatedAt: new Date().toISOString()
+    };
+
+    // Update the health profile in UserContext
+    await updateHealthProfile(healthProfileUpdate);
+
+    // Create the goal object for backward compatibility with existing systems
     const goal: UserFitnessGoal = {
       id: existingGoal?.id || `goal-${Date.now()}`,
       type: goalType as UserFitnessGoal['type'],
@@ -112,10 +137,11 @@ export const FitnessGoalSetup: React.FC<FitnessGoalSetupProps> = ({
       fitnessLevel: fitnessLevel as UserFitnessGoal['fitnessLevel'],
       availableTime: availableTime[0],
       daysPerWeek: daysPerWeek[0],
-      createdAt: existingGoal?.createdAt || new Date(),
+      createdAt: userData.healthProfile.fitnessGoalCreatedAt ? new Date(userData.healthProfile.fitnessGoalCreatedAt) : new Date(),
       updatedAt: new Date()
     };
 
+    // Also save to the fitness service for backward compatibility
     FitnessService.saveUserGoals(goal, userData.username);
     onGoalSet(goal);
   };

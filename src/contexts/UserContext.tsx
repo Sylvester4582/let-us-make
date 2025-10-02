@@ -1,5 +1,6 @@
 import { createContext, useState, ReactNode, useContext } from "react";
 import { eventService, EventResponse, EventType } from '@/services/eventService';
+import { pointsService } from '@/services/pointsService';
 import { AuthContext } from '@/contexts/AuthContext';
 import { healthProfileService, HealthProfile as BackendHealthProfile } from '@/services/healthProfileService';
 
@@ -16,6 +17,16 @@ export interface HealthProfile {
   weight?: number; // kg
   dateOfBirth?: string;
   gender?: 'male' | 'female' | 'other';
+  // Fitness-related data
+  targetWeight?: number;
+  fitnessLevel?: 'beginner' | 'intermediate' | 'advanced';
+  fitnessGoalType?: 'weight_loss' | 'muscle_gain' | 'endurance' | 'strength' | 'general_fitness';
+  preferredExerciseTypes?: string[]; // Exercise types as strings for simpler storage
+  availableTimePerDay?: number; // minutes per day
+  workoutDaysPerWeek?: number;
+  hasCompletedFitnessSetup?: boolean;
+  fitnessGoalCreatedAt?: string;
+  fitnessGoalUpdatedAt?: string;
 }
 
 export interface UserData {
@@ -36,6 +47,7 @@ interface UserContextType {
   resetUserData: () => void;
   syncWithAuth: (authUser: AuthUser | null) => void;
   logEvent: (eventType: EventType, metadata?: Record<string, string | number | boolean>) => Promise<EventResponse | null>;
+  getFitnessGoalFromProfile: () => object | null; // Returns UserFitnessGoal or null
 }
 
 export const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -53,7 +65,14 @@ const DEFAULT_USER_DATA: UserData = {
     age: 28,
     height: 170,
     weight: 68,
-    gender: 'other'
+    gender: 'other',
+    // Fitness defaults
+    fitnessLevel: 'beginner',
+    fitnessGoalType: 'general_fitness',
+    preferredExerciseTypes: [],
+    availableTimePerDay: 30,
+    workoutDaysPerWeek: 3,
+    hasCompletedFitnessSetup: false
   },
 };
 
@@ -127,48 +146,62 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updatePoints = async (pointsToAdd: number, eventType?: EventType): Promise<EventResponse | null> => {
-    if (isBackendConnected && eventType) {
-      // If backend is connected and event type is provided, use the event service
-      try {
-        const response = await eventService.logEvent(eventType);
-        if (response.success && response.data) {
-          // Update local state with backend response
-          setUserDataState(prev => {
-            const newPoints = response.data!.totalPoints;
-            const { level, levelTitle } = calculateLevel(newPoints);
-            
-            const updatedData = {
-              ...prev,
-              points: newPoints,
-              level,
-              levelTitle
-            };
-            
-            saveUserData(updatedData);
-            
-            // Also update AuthContext if authenticated
-            if (authContext && authContext.isAuthenticated) {
-              authContext.updateUserPoints(newPoints, level);
-            }
-            
-            return updatedData;
-          });
-          return response;
-        } else {
-          // Fallback to local update if backend fails
-          updatePointsLocally(pointsToAdd);
-          return null;
-        }
-      } catch (error) {
-        console.error('Error updating points via backend:', error);
-        updatePointsLocally(pointsToAdd);
-        return null;
+    console.log('=== UPDATE POINTS DEBUG ===');
+    console.log('Points to add:', pointsToAdd);
+    console.log('Event type:', eventType);
+    console.log('Backend connected:', isBackendConnected);
+    
+    // Always update locally first for immediate UI feedback
+    updatePointsLocally(pointsToAdd);
+    
+    // Also try to save to database via points service
+    try {
+      console.log('Attempting database sync...');
+      const dbResponse = await pointsService.addPoints(pointsToAdd);
+      console.log('Database response:', dbResponse);
+      
+      if (dbResponse.success && dbResponse.data) {
+        // Update state with database response to ensure consistency
+        setUserDataState(prev => {
+          const updatedData = {
+            ...prev,
+            points: dbResponse.data!.totalPoints,
+            level: dbResponse.data!.level,
+            levelTitle: calculateLevel(dbResponse.data!.totalPoints).levelTitle
+          };
+          
+          saveUserData(updatedData);
+          
+          // Also update AuthContext if authenticated
+          if (authContext && authContext.isAuthenticated) {
+            authContext.updateUserPoints(dbResponse.data!.totalPoints, dbResponse.data!.level);
+          }
+          
+          return updatedData;
+        });
+        console.log('=== END UPDATE POINTS DEBUG (Database Success) ===');
+      } else {
+        console.log('Database sync failed:', dbResponse.message);
+        console.log('=== END UPDATE POINTS DEBUG (Database Failed, Local Kept) ===');
       }
-    } else {
-      // Fallback to local update
-      updatePointsLocally(pointsToAdd);
-      return null;
+    } catch (error) {
+      console.error('Database sync error:', error);
+      console.log('=== END UPDATE POINTS DEBUG (Database Error, Local Kept) ===');
     }
+    
+    // For backward compatibility, still try event service if eventType provided
+    if (isBackendConnected && eventType) {
+      try {
+        console.log('Also attempting event service sync...');
+        const eventResponse = await eventService.logEvent(eventType);
+        console.log('Event service response:', eventResponse);
+        return eventResponse;
+      } catch (error) {
+        console.error('Event service error:', error);
+      }
+    }
+    
+    return null;
   };
 
   const logEvent = async (eventType: EventType, metadata?: Record<string, string | number | boolean>): Promise<EventResponse | null> => {
@@ -209,6 +242,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updatePointsLocally = (pointsToAdd: number) => {
+    console.log('=== LOCAL POINTS UPDATE ===');
+    console.log('Adding points locally:', pointsToAdd);
+    console.log('Current points:', userData.points);
+    
     setUserDataState(prev => {
       const newPoints = prev.points + pointsToAdd;
       const { level, levelTitle } = calculateLevel(newPoints);
@@ -220,11 +257,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         levelTitle
       };
       
+      console.log('New points:', newPoints);
+      console.log('Updated data:', updatedData);
+      
       // Save to localStorage if not connected to backend
       if (!isBackendConnected) {
+        console.log('Saving to localStorage (backend not connected)');
         saveUserData(updatedData);
+      } else {
+        console.log('Not saving to localStorage (backend connected)');
       }
       
+      console.log('=== END LOCAL POINTS UPDATE ===');
       return updatedData;
     });
   };
@@ -245,6 +289,36 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       
       return updated;
     });
+  };
+
+  const getFitnessGoalFromProfile = () => {
+    const hp = userData.healthProfile;
+    
+    if (!hp.hasCompletedFitnessSetup || !hp.weight) {
+      return null;
+    }
+
+    // Calculate BMI if height is available
+    const currentBMI = hp.height && hp.weight 
+      ? hp.weight / Math.pow(hp.height / 100, 2) 
+      : 0;
+
+    return {
+      id: `profile-goal-${userData.username}`,
+      type: hp.fitnessGoalType || 'general_fitness',
+      currentWeight: hp.weight,
+      targetWeight: hp.targetWeight,
+      currentBMI,
+      targetBMI: hp.targetWeight && hp.height 
+        ? hp.targetWeight / Math.pow(hp.height / 100, 2) 
+        : currentBMI,
+      preferredExerciseTypes: hp.preferredExerciseTypes || [],
+      fitnessLevel: hp.fitnessLevel || 'beginner',
+      availableTime: hp.availableTimePerDay || 30,
+      daysPerWeek: hp.workoutDaysPerWeek || 3,
+      createdAt: hp.fitnessGoalCreatedAt ? new Date(hp.fitnessGoalCreatedAt) : new Date(),
+      updatedAt: hp.fitnessGoalUpdatedAt ? new Date(hp.fitnessGoalUpdatedAt) : new Date()
+    };
   };
 
   const resetUserData = () => {
@@ -306,7 +380,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       calculateLevel,
       resetUserData,
       syncWithAuth,
-      logEvent
+      logEvent,
+      getFitnessGoalFromProfile
     }}>
       {children}
     </UserContext.Provider>
