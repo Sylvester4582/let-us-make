@@ -1,7 +1,7 @@
 # YouMatter Backend API Documentation
 
 ## Overview
-This is the backend API for the YouMatter gamification platform. It provides endpoints for user authentication, event tracking, and gamification features.
+This is the backend API for the YouMatter gamification platform. It provides endpoints for user authentication, event tracking, gamification features, and a comprehensive admin portal with analytics and business insights.
 
 ## Tech Stack
 - Node.js
@@ -9,6 +9,7 @@ This is the backend API for the YouMatter gamification platform. It provides end
 - SQLite3
 - JWT for authentication
 - bcrypt for password hashing
+- Admin analytics and reporting system
 
 ## Getting Started
 
@@ -25,8 +26,27 @@ git clone [repository-url]
 cd backend
 npm install
 
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your configurations
+
 # Start the server
 npm start
+```
+
+## Admin Portal
+
+### Admin Access
+The system includes a comprehensive admin portal with analytics and business insights.
+
+**Default Admin Credentials:**
+- Username: `admin`
+- Password: `admin123`
+
+**Note:** In production, change these credentials via environment variables:
+```bash
+ADMIN_USERNAME=your_admin_username
+ADMIN_PASSWORD=your_secure_password
 ```
 
 The server will start on `http://localhost:3001` by default.
@@ -282,6 +302,92 @@ This will execute tests for:
 - Error handling
 - Authorization checks
 
+## Admin API Endpoints
+
+### Admin Authentication
+```
+POST /api/admin/login
+```
+
+**Request Body:**
+```json
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Admin login successful",
+  "admin": true,
+  "token": "admin-session-token"
+}
+```
+
+### User Analytics
+```
+GET /api/admin/users/analytics
+Authorization: Bearer admin-session-token
+```
+
+**Response includes:**
+- Total user count
+- Active users (last 7 days)
+- Top users by points
+- User growth over time
+- Level distribution
+- Points distribution
+
+### Events Analytics
+```
+GET /api/admin/events/analytics
+Authorization: Bearer admin-session-token
+```
+
+**Response includes:**
+- Total events count
+- Events breakdown by type
+- Recent activity trends
+- Top point earners
+
+### Insurance Analytics
+```
+GET /api/admin/insurance/analytics
+Authorization: Bearer admin-session-token
+```
+
+**Response includes:**
+- Total quotes generated
+- Risk level distribution
+- Conversion rates
+- Revenue by plan type
+
+### Business Insights
+```
+GET /api/admin/insights
+Authorization: Bearer admin-session-token
+```
+
+**Response includes:**
+- Engagement trends
+- Retention metrics
+- Streak analysis
+- AI-powered recommendations
+
+### System Health
+```
+GET /api/admin/system/health
+Authorization: Bearer admin-session-token
+```
+
+**Response includes:**
+- Database status
+- API performance metrics
+- Storage usage
+- Error monitoring
+
 ## Frontend Integration Tips
 
 1. Store the JWT token securely (e.g., in localStorage)
@@ -301,6 +407,11 @@ const headers = {
 - Update UI after each successful event recording
 - Show animations for point gains
 - Display level-up notifications
+
+5. Admin Portal Access:
+- Use separate authentication flow for admin
+- Access admin dashboard at `/admin/dashboard`
+- Use admin token for analytics API calls
 
 5. Error handling:
 - Show user-friendly error messages

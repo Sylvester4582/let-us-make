@@ -75,9 +75,44 @@ class Database {
       console.log('Added claimed_benefits column to users table');
     } catch (error) {
       // Column already exists, which is fine
-      if (!error.message.includes('duplicate column name')) {
+      if (error.message && error.message.includes('duplicate column name')) {
+        console.log('claimed_benefits column already exists - skipping migration');
+      } else {
         console.error('Error adding claimed_benefits column:', error);
       }
+    }
+
+    // Create default admin user if it doesn't exist
+    await this.createDefaultAdminUser();
+  }
+
+  async createDefaultAdminUser() {
+    try {
+      const bcrypt = require('bcryptjs');
+      const { v4: uuidv4 } = require('uuid');
+      
+      // Check if admin user already exists
+      const existingAdmin = await this.get(
+        'SELECT * FROM users WHERE email = ?', 
+        ['admin@youmatter.com']
+      );
+      
+      if (!existingAdmin) {
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        const adminId = uuidv4();
+        
+        await this.run(
+          `INSERT INTO users (id, username, email, password_hash, points, level, created_at) 
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [adminId, 'admin', 'admin@youmatter.com', hashedPassword, 1000, 5, new Date().toISOString()]
+        );
+        
+        console.log('✅ Default admin user created: admin@youmatter.com / admin123');
+      } else {
+        console.log('Admin user already exists');
+      }
+    } catch (error) {
+      console.error('Error creating default admin user:', error.message);
     }
   }
 
@@ -85,8 +120,11 @@ class Database {
     return new Promise((resolve, reject) => {
       this.db.run(sql, params, function(err) {
         if (err) {
-          console.error('Error running sql:', sql);
-          console.error(err);
+          // Don't log errors for expected duplicate column scenarios
+          if (!err.message.includes('duplicate column name')) {
+            console.error('Error running sql:', sql);
+            console.error(err);
+          }
           reject(err);
         } else {
           resolve({ id: this.lastID });

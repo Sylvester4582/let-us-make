@@ -11,6 +11,7 @@ const benefitsRoutes = require('./routes/benefits');
 const insuranceRoutes = require('./routes/insurance');
 const challengesRoutes = require('./routes/challenges');
 const profileRoutes = require('./routes/profile');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use('/api/benefits', benefitsRoutes);
 app.use('/api/insurance', insuranceRoutes);
 app.use('/api/challenges', challengesRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

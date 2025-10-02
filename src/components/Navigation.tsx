@@ -15,8 +15,17 @@ import {
   Menu,
   X,
   Sparkles,
-  Activity
+  Activity,
+  Settings,
+  ChevronDown
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 
 interface NavigationProps {
   children: React.ReactNode;
@@ -71,6 +80,9 @@ export const Navigation = ({ children }: NavigationProps) => {
   const handleLogout = async () => {
     await logout();
   };
+
+  // Check if current user is admin
+  const isAdminUser = user?.email === 'admin@youmatter.com';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -128,27 +140,46 @@ export const Navigation = ({ children }: NavigationProps) => {
               </div>
 
               {/* User Menu */}
-              <div className="flex items-center gap-2">
-                <Avatar className="w-8 h-8">
-                  <div className="w-full h-full bg-blue-500 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
-                  </div>
-                </Avatar>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium">{user?.username}</p>
-                  <p className="text-xs text-gray-500">{userData.levelTitle}</p>
-                </div>
-              </div>
-
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2 p-2">
+                    <Avatar className="w-8 h-8">
+                      <div className="w-full h-full bg-blue-500 rounded-full flex items-center justify-center">
+                        <User className="w-4 h-4 text-white" />
+                      </div>
+                    </Avatar>
+                    <div className="hidden sm:block text-left">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{user?.username}</p>
+                        {isAdminUser && (
+                          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800">
+                            Admin
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500">{userData.levelTitle}</p>
+                    </div>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {isAdminUser && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/dashboard" className="flex items-center gap-2">
+                          <Settings className="w-4 h-4" />
+                          Admin Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Mobile menu button */}
               <Button
