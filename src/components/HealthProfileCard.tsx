@@ -17,17 +17,35 @@ export const HealthProfileCard: React.FC = () => {
     weight: userData.healthProfile.weight || '',
     gender: userData.healthProfile.gender || 'other',
     targetWeight: userData.healthProfile.targetWeight || '',
-    fitnessLevel: userData.healthProfile.fitnessLevel || 'beginner'
+    fitnessLevel: userData.healthProfile.fitnessLevel || 'beginner',
+    dateOfBirth: userData.healthProfile.dateOfBirth || ''
   });
+
+  // Function to calculate age from date of birth
+  const calculateAge = (dob: string): number => {
+    if (!dob) return 0;
+    const today = new Date();
+    const birthDate = new Date(dob);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Calculate current age from DOB
+  const currentAge = calculateAge(formData.dateOfBirth || userData.healthProfile.dateOfBirth || '');
 
   const handleSave = async () => {
     const healthData = {
-      age: formData.age ? parseInt(formData.age.toString()) : undefined,
+      age: currentAge > 0 ? currentAge : undefined, // Use calculated age
       height: formData.height ? parseInt(formData.height.toString()) : undefined,
       weight: formData.weight ? parseInt(formData.weight.toString()) : undefined,
       gender: formData.gender as 'male' | 'female' | 'other',
       targetWeight: formData.targetWeight ? parseInt(formData.targetWeight.toString()) : undefined,
-      fitnessLevel: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced'
+      fitnessLevel: formData.fitnessLevel as 'beginner' | 'intermediate' | 'advanced',
+      dateOfBirth: formData.dateOfBirth
     };
 
     await updateHealthProfile(healthData);
@@ -41,7 +59,8 @@ export const HealthProfileCard: React.FC = () => {
       weight: userData.healthProfile.weight || '',
       gender: userData.healthProfile.gender || 'other',
       targetWeight: userData.healthProfile.targetWeight || '',
-      fitnessLevel: userData.healthProfile.fitnessLevel || 'beginner'
+      fitnessLevel: userData.healthProfile.fitnessLevel || 'beginner',
+      dateOfBirth: userData.healthProfile.dateOfBirth || ''
     });
     setIsEditing(false);
   };
@@ -62,7 +81,7 @@ export const HealthProfileCard: React.FC = () => {
     return { label: 'Obese', color: 'bg-red-100 text-red-800' };
   };
 
-  const isProfileComplete = userData.healthProfile.age && userData.healthProfile.height && userData.healthProfile.weight;
+  const isProfileComplete = (userData.healthProfile.dateOfBirth || currentAge > 0) && userData.healthProfile.height && userData.healthProfile.weight;
 
   return (
     <Card className="w-full">
@@ -98,20 +117,33 @@ export const HealthProfileCard: React.FC = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="age">Age</Label>
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-gray-500" />
                   <Input
-                    id="age"
-                    type="number"
-                    placeholder="25"
-                    value={formData.age}
-                    onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
-                    min="18"
-                    max="100"
+                    id="dateOfBirth"
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
                   />
                 </div>
               </div>
+              <div>
+                <Label htmlFor="calculatedAge">Age (calculated)</Label>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <Input
+                    id="calculatedAge"
+                    type="number"
+                    value={currentAge || ''}
+                    disabled
+                    placeholder="Age calculated from DOB"
+                    className="bg-gray-50"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <Label htmlFor="gender">Gender</Label>
                 <Select value={formData.gender} onValueChange={(value: 'male' | 'female' | 'other') => setFormData(prev => ({ ...prev, gender: value }))}>
@@ -216,12 +248,19 @@ export const HealthProfileCard: React.FC = () => {
               <div className="p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-1">
                   <Calendar className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium">Age</span>
+                  <span className="text-sm font-medium">Date of Birth</span>
                 </div>
                 <p className="text-lg font-bold">
-                  {userData.healthProfile.age || 'Not set'}
-                  {userData.healthProfile.age && ' years'}
+                  {userData.healthProfile.dateOfBirth 
+                    ? new Date(userData.healthProfile.dateOfBirth).toLocaleDateString()
+                    : 'Not set'
+                  }
                 </p>
+                {userData.healthProfile.dateOfBirth && (
+                  <p className="text-sm text-gray-500">
+                    Age: {currentAge} years
+                  </p>
+                )}
               </div>
               <div className="p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-1">

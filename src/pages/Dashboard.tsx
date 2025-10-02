@@ -16,6 +16,7 @@ import {
 import { Link } from "react-router-dom";
 import { RiskAssessmentCard } from "../components/RiskAssessmentCard";
 import { HealthProfileCard } from "../components/HealthProfileCard";
+import { RiskScoreCard } from "../components/RiskScoreCard";
 
 const Dashboard = () => {
   const { userData, resetUserData } = useUser();
@@ -162,6 +163,9 @@ const Dashboard = () => {
 
       {/* Health Profile Management */}
       <HealthProfileCard />
+
+      {/* Risk Assessment with New Formula */}
+      <RiskScoreCard basePremium={100} showDetails={true} />
 
       {/* Quick Access Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

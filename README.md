@@ -1,8 +1,100 @@
 # Welcome to YouMatter - AI-Powered Wellness Platform
 
+## 🚀 Quick Start (Easiest Way)
+
+### **Windows Users:**
+Simply double-click `start-app.bat` or run:
+```cmd
+start-dev.bat
+```
+
+### **Linux/Mac Users:**
+```bash
+chmod +x start-dev.sh
+./start-app.sh
+```
+
+The batch files will automatically:
+- ✅ Check for Node.js and npm installation
+- ✅ Install all dependencies (frontend & backend)
+- ✅ Create .env file from template
+- ✅ Start both servers---
+
+## 🔄 Recent Updates & Development Log
+
+### v2.1.0 - Health & Risk Assessment Integration
+- ✅ **Date of Birth Integration**: Automatic age calculation from DOB across all components
+- ✅ **Advanced Risk Calculation**: Standardized insurance risk formula with BMI, exercise, age factors  
+- ✅ **Health Profile Unification**: Fitness goals and health data now share unified interface
+- ✅ **RiskScoreCard Component**: Visual risk breakdown with detailed factor analysis
+- ✅ **Age-based Premium Calculations**: 5-tier premium system based on calculated health risk
+
+### v2.0.0 - Daily Challenges & Point System
+- ✅ **Daily Challenges System**: 7 challenge types with point rewards
+- ✅ **Database Point Sync**: Real-time point tracking with backend persistence  
+- ✅ **Challenge Completion**: Track progress across all challenge types
+- ✅ **Point Integration**: Unified point system across all app features
+- ✅ **Improved User Experience**: Immediate feedback with fallback mechanisms
+
+### v1.5.0 - Fitness Goal Enhancement  
+- ✅ **AI-Powered Goal Setup**: Personalized fitness recommendations
+- ✅ **BMI Calculation**: Real-time BMI tracking and health categories
+- ✅ **Exercise Type Selection**: Multiple exercise preferences with visual selection
+- ✅ **Goal Progress Tracking**: Monitor fitness goal achievements over time
+
+### v1.0.0 - Core Platform
+- ✅ **User Authentication**: JWT-based secure authentication
+- ✅ **Gamification System**: Points, levels, streaks, badges
+- ✅ **AI Integration**: Gemini AI for personalized insights
+- ✅ **Health Tracking**: Basic activity logging and progress monitoring
+
+---
+
+**Built with ❤️ for wellness and powered by AI** 🤖✨
+
+For the latest updates and deployment, visit: [Lovable Project](https://lovable.dev/projects/3cdd1a6f-5ff3-4970-bac9-29dd94a8eaf2)
+- ✅ Open the app at http://localhost:5173
+
+**That's it! Your app will be running in under 2 minutes!**
+
+---
+
 ## 🌟 Project Overview
 
-YouMatter is a comprehensive wellness platform that combines gamification, AI-driven personalization, and user authentication to create an engaging health and wellness experience.
+YouMatter is a comprehensive wellness platform that combines gamification, AI-driven personalization, health risk assessment, and user authentication to create an engaging health and wellness experience.
+
+**Features Include:**
+- 🏥 **Health Risk Assessment** - Calculate insurance risk scores with BMI, exercise, and age factors
+- 🎯 **Daily Challenges** - Complete fitness and wellness challenges to earn points
+- 📊 **Fitness Goal Tracking** - AI-powered fitness goal setup with automatic age calculation from DOB
+- 🎮 **Gamification System** - Points, levels, streaks, and leaderboards
+- 🤖 **AI Integration** - Gemini AI for personalized recommendations and insights
+- 💳 **Insurance Integration** - Risk-based premium calculations and recommendations
+
+## ✨ New Features Added
+
+### 🔢 **Smart Age Calculation**
+- Enter your date of birth once, age is calculated automatically
+- Used across health profiles, risk assessments, and insurance calculations
+- No more manual age updates needed!
+
+### 🏥 **Advanced Health Risk Assessment**
+- Comprehensive BMI-based risk calculation
+- Exercise frequency impact on health scores  
+- Age-adjusted risk factors for insurance premiums
+- Real-time risk score visualization with detailed breakdowns
+
+### 🎯 **Enhanced Daily Challenges**
+- 7 different challenge types (exercise, nutrition, mindfulness, etc.)
+- Point system integrated with database
+- Real-time progress tracking and completion
+- Synchronized across all components
+
+### 🎮 **Integrated Point System**
+- Points from daily challenges sync with leaderboard
+- Database persistence for reliable point tracking
+- Immediate UI feedback with localStorage backup
+- Level progression based on total points earned
 
 **URL**: https://lovable.dev/projects/3cdd1a6f-5ff3-4970-bac9-29dd94a8eaf2
 
@@ -37,27 +129,78 @@ YouMatter is a comprehensive wellness platform that combines gamification, AI-dr
 
 ### Frontend
 - **React 18** with TypeScript
-- **Vite** for fast development
+- **Vite** for fast development  
 - **Tailwind CSS** + **Shadcn/ui** for styling
 - **React Router** for navigation
 - **React Query** for state management
 - **Axios** for API communication
+- **Lucide React** for icons
 
-### Backend
+### Backend  
 - **Node.js** with Express
-- **SQLite** database
+- **SQLite** database with auto-initialization
 - **JWT** authentication
 - **bcrypt** for password hashing
-- **CORS** enabled
+- **CORS** enabled for cross-origin requests
 
 ### AI Integration
 - **Google Gemini AI** for personalization
 - **Real-time analysis** of user patterns
 - **Predictive modeling** for challenges
+- **Health risk assessment** algorithms
 
-## 🚀 Quick Start
+### Key Services
+- **Risk Calculation Service**: BMI, exercise, and age-based risk scoring
+- **Daily Challenges Service**: 7 challenge types with point tracking
+- **Points Service**: Database-synced point management
+- **Insurance Service**: Risk-based premium calculations  
+- **Fitness Service**: AI-powered goal recommendations
 
-### Option 1: Automated Setup (Recommended)
+## 📁 Project Structure
+
+```
+youmatter/
+├── src/
+│   ├── components/           # React components
+│   │   ├── ui/              # Shadcn UI components
+│   │   ├── FitnessGoalSetup.tsx
+│   │   ├── HealthProfileCard.tsx
+│   │   ├── RiskScoreCard.tsx
+│   │   └── DailyChallengesPage.tsx
+│   ├── contexts/            # React contexts
+│   │   └── UserContext.tsx  # User state management
+│   ├── services/            # Business logic
+│   │   ├── riskCalculationService.ts
+│   │   ├── dailyChallengesService.ts
+│   │   ├── pointsService.ts
+│   │   └── insuranceRecommendationService.ts
+│   ├── pages/               # Route components
+│   └── lib/                 # Utilities
+├── backend/
+│   ├── server.js            # Express server
+│   ├── database.js          # SQLite setup
+│   └── youmatter.db         # SQLite database
+├── start-app.bat            # Windows quick start
+├── start-app.sh             # Linux/Mac quick start
+└── README.md
+```
+
+## 🚀 Advanced Setup Options
+
+### Option 1: One-Click Setup (Recommended) ⭐
+
+#### Windows:
+```cmd
+start-app.bat
+```
+
+#### Linux/Mac:
+```bash
+chmod +x start-app.sh
+./start-app.sh
+```
+
+### Option 2: Legacy Automated Scripts
 
 #### Windows:
 ```bash
@@ -70,7 +213,7 @@ chmod +x start-dev.sh
 ./start-dev.sh
 ```
 
-### Option 2: Manual Setup
+### Option 3: Manual Setup
 
 #### Prerequisites
 - Node.js 18+ installed
@@ -90,39 +233,57 @@ npm install
 ```
 
 #### 3. Environment Configuration
-Copy `.env.example` to `.env` and configure:
+Create `.env` file in the root directory:
 ```env
-# Gemini AI Configuration
+# Gemini AI Configuration (Optional - app works without it)
 VITE_GEMINI_API_KEY=your-gemini-api-key-here
 
-# Backend API Configuration
+# Backend API Configuration  
 VITE_API_URL=http://localhost:3001/api
 
 # JWT Secret (for backend)
 JWT_SECRET=your-jwt-secret-key-here
 ```
 
-#### 4. Start Backend Server
+#### 4. Start Both Servers
+**Terminal 1 (Backend):**
 ```bash
 cd backend
 npm run dev
 # Backend runs on http://localhost:3001
 ```
 
-#### 5. Start Frontend
+**Terminal 2 (Frontend):**
 ```bash
-npm run dev
+npm run dev  
 # Frontend runs on http://localhost:5173
 ```
+
+Then visit http://localhost:5173 to use the app!
 
 ## 🔗 API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
+- `POST /api/auth/login` - User login  
 - `GET /api/auth/profile` - Get user profile
+- `PUT /api/auth/profile` - Update user profile
 
-### Events
+### Health Profile
+- `PUT /api/health-profile` - Update health profile with DOB, fitness goals
+- `GET /api/health-profile` - Get complete health profile
+
+### Points & Gamification  
+- `POST /api/points/add` - Add points for user activities
+- `GET /api/points/leaderboard` - Get leaderboard rankings
+- `PUT /api/points/update` - Update user points and level
+
+### Daily Challenges
+- `GET /api/challenges/daily` - Get available daily challenges
+- `POST /api/challenges/complete` - Mark challenge as completed
+- `GET /api/challenges/progress` - Get challenge completion progress
+
+### Events & Activities
 - `POST /api/events` - Log activity events
 - `GET /api/events` - Get user activity history
 
@@ -132,22 +293,43 @@ npm run dev
 ## 📱 Usage Guide
 
 ### 1. Getting Started
-1. **Register**: Create a new account or try guest mode
-2. **Login**: Access your personalized dashboard
-3. **Explore**: Check out your level, points, and AI insights
+1. **Quick Start**: Run `start-app.bat` (Windows) or `./start-app.sh` (Linux/Mac)
+2. **Register**: Create a new account or try guest mode  
+3. **Complete Health Profile**: Add your date of birth, height, weight for personalized features
+4. **Set Fitness Goals**: AI-powered goal setup with automatic age calculation
+5. **Explore**: Check out your level, points, daily challenges, and risk assessments
 
-### 2. Earning Points
+### 2. Health & Fitness Features
+- **Health Risk Assessment**: Get detailed risk scores based on BMI, exercise, and age
+- **Fitness Goal Setup**: AI recommends personalized workout plans and nutrition goals
+- **Daily Challenges**: Complete 7 different types of wellness challenges
+- **Age Calculation**: Enter DOB once, age automatically calculated for all features
+- **Insurance Integration**: Risk-based premium calculations and recommendations
+
+### 3. Earning Points
+- **Complete Daily Challenges**: +5 to +25 points per challenge
 - **Log Workout**: +10 points
-- **Read Article**: +7 points
-- **View Policy**: +15 points
+- **Read Health Article**: +7 points  
+- **View Insurance Policy**: +15 points
 - **Invite Friend**: +20 points
-- **Daily Reward**: +50 points
+- **Daily Login Reward**: +50 points
 
-### 3. AI Features
-- **Motivation Card**: Personalized messages based on your style
-- **Predictive Challenges**: AI-generated challenges matching your patterns
-- **Smart Recommendations**: Context-aware suggestions
-- **Profile Insights**: Deep analysis of your wellness patterns
+### 4. Daily Challenges System
+Choose from 7 challenge types:
+- 🏃‍♂️ **Exercise**: 30-minute workout, 10k steps, strength training
+- 🥗 **Nutrition**: Healthy meal, 8 glasses of water, no processed food
+- 🧘‍♀️ **Mindfulness**: Meditation, gratitude journal, stress management
+- 📚 **Learning**: Read health article, learn new skill, educational content
+- 😴 **Sleep**: 8 hours sleep, bedtime routine, sleep tracking
+- 🤝 **Social**: Connect with friend, group activity, community engagement
+- 🌱 **Lifestyle**: Outdoor activity, clean environment, healthy habit
+
+### 5. Health Risk Assessment
+- **BMI Calculation**: Automatic BMI calculation from height/weight
+- **Exercise Impact**: Weekly workout frequency affects risk scores
+- **Age Factors**: Age-adjusted risk multipliers for accurate assessment
+- **Insurance Premiums**: 5-tier premium system based on calculated risk
+- **Improvement Recommendations**: Personalized suggestions to lower risk scores
 
 ### 4. Levels & Rewards
 - **Level 1 (0-99 pts)**: Beginner
@@ -252,12 +434,56 @@ Built with **Shadcn/ui** components:
 
 ## 🐛 Troubleshooting
 
+### Using Quick Start Scripts
+
+#### Windows (`start-app.bat`):
+- **Double-click not working**: Right-click → "Run as administrator"
+- **"Node not found"**: Install Node.js from https://nodejs.org/
+- **Ports already in use**: Check if other apps are using ports 3001 or 5173
+- **Script closes immediately**: Run from Command Prompt to see error messages
+
+#### Linux/Mac (`start-app.sh`):
+- **Permission denied**: Run `chmod +x start-app.sh` first
+- **Script not executable**: Ensure file has executable permissions
+- **Dependencies fail**: Make sure you have Node.js 18+ installed
+
 ### Common Issues
 
-1. **Backend not starting**: Check if port 3001 is available
-2. **Frontend not connecting**: Verify `VITE_API_URL` in `.env`
-3. **AI features not working**: Add valid `VITE_GEMINI_API_KEY`
-4. **Database issues**: Delete `backend/youmatter.db` to reset
+1. **Backend not starting**: 
+   - Check if port 3001 is available
+   - Verify Node.js is installed: `node --version`
+   - Check backend logs in the terminal window
+
+2. **Frontend not connecting**: 
+   - Verify `VITE_API_URL=http://localhost:3001/api` in `.env`
+   - Ensure backend is running first
+   - Check browser console for connection errors
+
+3. **AI features not working**: 
+   - Add valid `VITE_GEMINI_API_KEY` to `.env` file
+   - App works without API key but with limited AI features
+   - Check API key validity at Google AI Studio
+
+4. **Database issues**: 
+   - Delete `backend/youmatter.db` to reset database
+   - Restart backend server to recreate tables
+   - Check file permissions on database file
+
+5. **Points not syncing**:
+   - Check backend connection in browser Network tab
+   - Verify user is logged in (not in guest mode)
+   - Check backend logs for point update errors
+
+6. **Health profile not saving**:
+   - Ensure all required fields are filled (DOB, weight, exercise types)
+   - Check age calculation is working (age > 0)
+   - Verify backend health-profile endpoints are responding
+
+### Debug Mode
+- Add `DEBUG=true` to `.env` for detailed logging
+- Check browser console (F12) for frontend errors
+- Check terminal output for backend errors
+- Monitor Network tab for API request failures
 
 ### Support
 - Check the terminal logs for detailed error messages

@@ -7,6 +7,8 @@ export type ChallengeType =
   | 'invite_friend'
   | 'share_achievement';
 
+import { RiskCalculationService } from './riskCalculationService';
+
 export interface DailyChallenge {
   id: string;
   type: ChallengeType;
@@ -253,7 +255,24 @@ export class DailyChallengesService {
     localStorage.setItem(statsKey, JSON.stringify(stats));
   }
 
-  calculateRiskScore(userId: string): number {
+  calculateRiskScore(userId: string, healthProfile?: {
+    age?: number;
+    height?: number;
+    weight?: number;
+    workoutDaysPerWeek?: number;
+  }): number {
+    // If health profile is provided, use the new standardized formula
+    if (healthProfile && healthProfile.age && healthProfile.height && healthProfile.weight) {
+      const riskResult = RiskCalculationService.calculateRiskFromProfile(healthProfile);
+      if (riskResult) {
+        // Convert adjR (0-1) to risk score (0-100, where higher is worse)
+        // Level 1 (adjR ≤ 0.20) → Risk Score 20
+        // Level 5 (adjR > 0.80) → Risk Score 100
+        return Math.round(riskResult.adjR * 100);
+      }
+    }
+
+    // Fallback to activity-based calculation if health profile incomplete
     const stats = this.getUserStats(userId);
     
     // Base risk score (higher is worse)

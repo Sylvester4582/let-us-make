@@ -81,6 +81,25 @@ export const FitnessGoalSetup: React.FC<FitnessGoalSetupProps> = ({
     existingGoal?.preferredExerciseTypes || 
     []
   );
+  const [dateOfBirth, setDateOfBirth] = useState<string>(
+    userData.healthProfile.dateOfBirth || ''
+  );
+
+  // Function to calculate age from date of birth
+  const calculateAge = (dob: string): number => {
+    if (!dob) return 0;
+    const today = new Date();
+    const birthDate = new Date(dob);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Calculate current age from DOB
+  const currentAge = calculateAge(dateOfBirth);
 
   const handleExerciseTypeToggle = (type: ExerciseType) => {
     setSelectedExerciseTypes(prev => 
@@ -95,8 +114,14 @@ export const FitnessGoalSetup: React.FC<FitnessGoalSetupProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!currentWeight || selectedExerciseTypes.length === 0) {
-      alert('Please fill in all required fields');
+    if (!currentWeight || selectedExerciseTypes.length === 0 || !dateOfBirth) {
+      alert('Please fill in all required fields (weight, date of birth, and at least one exercise type)');
+      return;
+    }
+
+    // Validate age calculation
+    if (currentAge < 1 || currentAge > 120) {
+      alert('Please enter a valid date of birth');
       return;
     }
 
@@ -117,6 +142,8 @@ export const FitnessGoalSetup: React.FC<FitnessGoalSetupProps> = ({
       preferredExerciseTypes: selectedExerciseTypes.map(type => type as string),
       availableTimePerDay: availableTime[0],
       workoutDaysPerWeek: daysPerWeek[0],
+      dateOfBirth: dateOfBirth,
+      age: currentAge, // Auto-calculated from DOB
       hasCompletedFitnessSetup: true,
       fitnessGoalCreatedAt: userData.healthProfile.fitnessGoalCreatedAt || new Date().toISOString(),
       fitnessGoalUpdatedAt: new Date().toISOString()
@@ -215,6 +242,35 @@ export const FitnessGoalSetup: React.FC<FitnessGoalSetupProps> = ({
         </div>
 
         {/* Physical Stats */}
+        {/* Date of Birth Section */}
+        <div className="space-y-4">
+          <Label className="text-base font-semibold">Personal Information</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+              <Input
+                id="dateOfBirth"
+                type="date"
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="age">Age (calculated automatically)</Label>
+              <Input
+                id="age"
+                type="number"
+                value={currentAge || ''}
+                disabled
+                placeholder="Age will be calculated from DOB"
+                className="bg-gray-50"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Physical Information Section */}
         <div className="space-y-4">
           <Label className="text-base font-semibold">Physical Information</Label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -252,17 +308,29 @@ export const FitnessGoalSetup: React.FC<FitnessGoalSetupProps> = ({
             </div>
           </div>
           
-          {currentBMI > 0 && (
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <div className="text-sm font-medium">
-                Current BMI: {currentBMI.toFixed(1)} - 
-                <span className={`ml-1 ${bmiCategory.color}`}>
-                  {bmiCategory.label}
-                </span>
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Healthy BMI range: 18.5 - 24.9
-              </div>
+          {(currentBMI > 0 || currentAge > 0) && (
+            <div className="p-3 bg-gray-50 rounded-lg space-y-2">
+              {currentAge > 0 && (
+                <div className="text-sm font-medium">
+                  Age: {currentAge} years
+                  <span className="text-xs text-gray-500 ml-2">
+                    (calculated from date of birth)
+                  </span>
+                </div>
+              )}
+              {currentBMI > 0 && (
+                <>
+                  <div className="text-sm font-medium">
+                    Current BMI: {currentBMI.toFixed(1)} - 
+                    <span className={`ml-1 ${bmiCategory.color}`}>
+                      {bmiCategory.label}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Healthy BMI range: 18.5 - 24.9
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

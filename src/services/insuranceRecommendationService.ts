@@ -7,6 +7,7 @@ import {
   RiskCategory 
 } from '../types/insurance';
 import { insurancePlans } from '../data/insurancePlans';
+import { RiskCalculationService, RiskCalculationResult } from './riskCalculationService';
 
 // Calculate BMI category
 export const calculateBMICategory = (bmi: number): string => {
@@ -346,41 +347,63 @@ export const generateRiskFactors = (profile: UserHealthProfile): string[] => {
   return factors;
 };
 
-// Helper function to calculate numeric risk score
+// Helper function to calculate numeric risk score using standardized formula
 export const calculateRiskScore = (profile: UserHealthProfile): number => {
-  let score = 0;
+  // Try to use standardized calculation if we have enough data
+  // Note: UserHealthProfile only has BMI, not separate height/weight
+  // We'll need to estimate or use BMI directly
   
-  // Age scoring (0-30 points)
-  if (profile.age > 65) score += 30;
-  else if (profile.age > 50) score += 20;
-  else if (profile.age > 35) score += 10;
-  
-  // BMI scoring (0-25 points)
-  const bmiCategory = calculateBMICategory(profile.bmi);
-  if (bmiCategory === 'obese') score += 25;
-  else if (bmiCategory === 'overweight') score += 15;
-  else if (bmiCategory === 'underweight') score += 10;
-  
-  // Smoking (0-20 points)
-  if (profile.smokingStatus === 'current') score += 20;
-  else if (profile.smokingStatus === 'former') score += 5;
-  
-  // Chronic conditions (0-15 points)
-  if (profile.chronicConditions) {
-    score += Math.min(15, profile.chronicConditions.length * 5);
+  // For now, use the BMI-based approach with exercise frequency
+  const exerciseDays = profile.exerciseFrequency === 'heavy' ? 6 :
+                      profile.exerciseFrequency === 'moderate' ? 4 :
+                      profile.exerciseFrequency === 'light' ? 2 : 0;
+
+  // Simulate the standardized risk calculation using available data
+  const BMI_OPT = 22.5;
+  const BMI_DEV_MAX = 10;
+  const W_B = 0.6; // BMI weight
+  const W_E = 0.4; // Exercise weight
+
+  // Calculate BMI deviation factor
+  const Delta_BMI = Math.abs(profile.bmi - BMI_OPT);
+  const b = Math.min(1.0, Delta_BMI / BMI_DEV_MAX);
+
+  // Calculate exercise factor
+  const e = exerciseDays / 7.0;
+
+  // Calculate base risk score
+  const R = W_B * b + W_E * (1 - e);
+
+  // Calculate age factor
+  const age_factor = profile.age <= 35 
+    ? 1.0 
+    : 1.0 + 0.02 * Math.floor((profile.age - 35) / 10);
+
+  // Calculate adjusted risk score
+  const adjR = Math.min(1.0, R * age_factor);
+
+  // Apply additional risk factors from profile
+  let adjustedRisk = adjR;
+
+  // Smoking adjustment
+  if (profile.smokingStatus === 'current') {
+    adjustedRisk = Math.min(1.0, adjustedRisk + 0.15);
+  } else if (profile.smokingStatus === 'former') {
+    adjustedRisk = Math.min(1.0, adjustedRisk + 0.05);
   }
-  
-  // Exercise (subtract points for good habits)
-  if (profile.exerciseFrequency === 'heavy') score -= 10;
-  else if (profile.exerciseFrequency === 'moderate') score -= 5;
-  else if (profile.exerciseFrequency === 'light') score += 5;
-  else if (profile.exerciseFrequency === 'none') score += 10;
-  
-  // Occupation risk
-  if (profile.occupation === 'hazardous') score += 15;
-  else if (profile.occupation === 'physical') score += 5;
-  
-  return Math.max(0, Math.min(100, score));
+
+  // Chronic conditions adjustment
+  if (profile.chronicConditions && profile.chronicConditions.length > 0) {
+    adjustedRisk = Math.min(1.0, adjustedRisk + (profile.chronicConditions.length * 0.03));
+  }
+
+  // Occupation adjustment
+  if (profile.occupation === 'hazardous') {
+    adjustedRisk = Math.min(1.0, adjustedRisk + 0.10);
+  }
+
+  // Convert adjR (0-1) to risk score (0-100, where higher is worse)
+  return Math.round(adjustedRisk * 100);
 };
 
 // Create user health profile from fitness data with comprehensive risk assessment

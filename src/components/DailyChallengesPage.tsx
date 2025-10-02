@@ -112,7 +112,7 @@ export const DailyChallengesPage: React.FC<DailyChallengesPageProps> = ({ userId
       weeklyPoints: userStats.weeklyPoints,
       currentStreak: userStats.currentStreak,
       totalChallengesCompleted: userStats.completedChallenges.length,
-      riskScore: challengeService.calculateRiskScore(userId),
+      riskScore: challengeService.calculateRiskScore(userId, userData.healthProfile),
       currentLevel: level,
       nextLevelProgress
     };
