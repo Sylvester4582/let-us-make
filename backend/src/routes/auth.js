@@ -38,9 +38,19 @@ router.post('/register', [
     const user = await User.create({ username, email, password });
 
     // Generate token
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('JWT_SECRET environment variable is not set');
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error',
+        errors: ['Authentication service unavailable']
+      });
+    }
+
     const token = jwt.sign(
       { id: user.id },
-      process.env.JWT_SECRET || 'your-secret-key',
+      jwtSecret,
       { expiresIn: '24h' }
     );
 
@@ -103,9 +113,19 @@ router.post('/login', [
     }
 
     // Generate token
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('JWT_SECRET environment variable is not set');
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error',
+        errors: ['Authentication service unavailable']
+      });
+    }
+
     const token = jwt.sign(
       { id: user.id },
-      process.env.JWT_SECRET || 'your-secret-key',
+      jwtSecret,
       { expiresIn: '24h' }
     );
 

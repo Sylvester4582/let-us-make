@@ -14,6 +14,8 @@ import {
   Award
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { RiskAssessmentCard } from "../components/RiskAssessmentCard";
+import { HealthProfileCard } from "../components/HealthProfileCard";
 
 const Dashboard = () => {
   const { userData, resetUserData } = useUser();
@@ -42,6 +44,9 @@ const Dashboard = () => {
   };
 
   const levelProgress = getLevelProgress();
+
+  // Check if user has health profile data
+  const hasHealthProfile = userData.healthProfile.age && userData.healthProfile.height && userData.healthProfile.weight;
 
   return (
     <div className="space-y-8">
@@ -123,6 +128,40 @@ const Dashboard = () => {
           </div>
         </Card>
       </div>
+
+      {/* Risk Assessment - Prominently displayed */}
+      {hasHealthProfile ? (
+        <RiskAssessmentCard 
+          age={userData.healthProfile.age!}
+          height={userData.healthProfile.height!}
+          weight={userData.healthProfile.weight!}
+          challengesCompleted={userData.points > 0 ? Math.floor(userData.points / 50) : 0}
+          streakDays={userData.streak}
+          totalPoints={userData.points}
+        />
+      ) : (
+        <Card className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="p-3 bg-amber-100 rounded-full">
+                <Shield className="h-8 w-8 text-amber-600" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-amber-900 mb-2">Complete Your Health Profile</h3>
+              <p className="text-amber-700 mb-4">
+                Set up your health information to get personalized risk assessments and unlock better insurance rates!
+              </p>
+              <p className="text-sm text-amber-600">
+                Your data is secure and only used to calculate your personalized health level.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Health Profile Management */}
+      <HealthProfileCard />
 
       {/* Quick Access Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

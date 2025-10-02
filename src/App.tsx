@@ -16,6 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import Insurance from "./pages/Insurance";
 import Challenges from "./pages/Challenges";
 import Leaderboard from "./pages/Leaderboard";
+import Fitness from "./pages/Fitness";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
@@ -72,6 +73,13 @@ const App = () => (
                       <ProtectedRoute>
                         <Navigation>
                           <Leaderboard />
+                        </Navigation>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/fitness" element={
+                      <ProtectedRoute>
+                        <Navigation>
+                          <Fitness />
                         </Navigation>
                       </ProtectedRoute>
                     } />

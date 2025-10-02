@@ -312,7 +312,7 @@ const headers = {
 Create a `.env` file in the root directory:
 ```
 PORT=3001
-JWT_SECRET=your-secret-key
+JWT_SECRET=your_secure_random_jwt_secret_here_use_minimum_32_characters
 NODE_ENV=development
 ```
 

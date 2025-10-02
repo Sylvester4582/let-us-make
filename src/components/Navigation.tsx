@@ -14,7 +14,8 @@ import {
   LogOut,
   Menu,
   X,
-  Sparkles
+  Sparkles,
+  Activity
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -45,6 +46,12 @@ export const Navigation = ({ children }: NavigationProps) => {
       href: '/challenges',
       icon: Target,
       description: 'Daily Goals'
+    },
+    {
+      name: 'AI Fitness',
+      href: '/fitness',
+      icon: Activity,
+      description: 'Smart Workouts'
     },
     {
       name: 'Leaderboard',

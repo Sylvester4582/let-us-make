@@ -48,7 +48,21 @@ class Database {
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )`,
       `CREATE INDEX IF NOT EXISTS idx_user_events ON events(user_id, timestamp DESC)`,
-      `CREATE INDEX IF NOT EXISTS idx_event_type ON events(event_type)`
+      `CREATE INDEX IF NOT EXISTS idx_event_type ON events(event_type)`,
+      
+      `CREATE TABLE IF NOT EXISTS user_health_profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL UNIQUE,
+        age INTEGER,
+        height INTEGER,
+        weight INTEGER,
+        gender TEXT CHECK(gender IN ('male', 'female', 'other')),
+        date_of_birth TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_health_user_id ON user_health_profiles(user_id)`
     ];
 
     for (const table of tables) {

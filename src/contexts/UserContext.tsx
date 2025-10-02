@@ -1,6 +1,7 @@
 import { createContext, useState, ReactNode, useContext } from "react";
 import { eventService, EventResponse, EventType } from '@/services/eventService';
 import { AuthContext } from '@/contexts/AuthContext';
+import { healthProfileService, HealthProfile as BackendHealthProfile } from '@/services/healthProfileService';
 
 interface AuthUser {
   username?: string;
@@ -9,18 +10,28 @@ interface AuthUser {
   streak?: number;
 }
 
+export interface HealthProfile {
+  age?: number;
+  height?: number; // cm
+  weight?: number; // kg
+  dateOfBirth?: string;
+  gender?: 'male' | 'female' | 'other';
+}
+
 export interface UserData {
   username: string;
   points: number;
   level: number;
   streak: number;
   levelTitle: string;
+  healthProfile: HealthProfile;
 }
 
 interface UserContextType {
   userData: UserData;
   updatePoints: (points: number, eventType?: EventType) => Promise<EventResponse | null>;
   setUserData: (data: Partial<UserData>) => void;
+  updateHealthProfile: (healthData: Partial<HealthProfile>) => Promise<void>;
   calculateLevel: (points: number) => { level: number; levelTitle: string };
   resetUserData: () => void;
   syncWithAuth: (authUser: AuthUser | null) => void;
@@ -38,6 +49,12 @@ const DEFAULT_USER_DATA: UserData = {
   level: 3,
   streak: 7,
   levelTitle: "Advocate",
+  healthProfile: {
+    age: 28,
+    height: 170,
+    weight: 68,
+    gender: 'other'
+  },
 };
 
 // Helper functions for localStorage
@@ -54,10 +71,14 @@ const loadUserData = (): UserData => {
     const saved = localStorage.getItem('youmatter_user_data');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Ensure all required fields exist
+      // Ensure all required fields exist and add healthProfile if missing
       return {
         ...DEFAULT_USER_DATA,
         ...parsed,
+        healthProfile: {
+          ...DEFAULT_USER_DATA.healthProfile,
+          ...(parsed.healthProfile || {})
+        }
       };
     }
   } catch (error) {
@@ -96,6 +117,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         level,
         levelTitle,
         streak: authUser.streak || 0,
+        healthProfile: userData.healthProfile, // Preserve existing health profile
       };
       setUserDataState(syncedData);
       setIsBackendConnected(true);
@@ -232,11 +254,55 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateHealthProfile = async (healthData: Partial<HealthProfile>) => {
+    // Update local state immediately
+    setUserDataState(prev => {
+      const updated = {
+        ...prev,
+        healthProfile: {
+          ...prev.healthProfile,
+          ...healthData
+        }
+      };
+      
+      // Save to localStorage if not connected to backend
+      if (!isBackendConnected) {
+        saveUserData(updated);
+      }
+      
+      return updated;
+    });
+
+    // If backend is connected, sync with server
+    if (isBackendConnected) {
+      try {
+        const response = await healthProfileService.updateHealthProfile(healthData);
+        if (response.success && response.data) {
+          // Update local state with server response to ensure consistency
+          setUserDataState(prev => ({
+            ...prev,
+            healthProfile: {
+              age: response.data?.age,
+              height: response.data?.height,
+              weight: response.data?.weight,
+              gender: response.data?.gender,
+              dateOfBirth: response.data?.dateOfBirth
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to sync health profile with backend:', error);
+        // Continue with local storage as fallback
+      }
+    }
+  };
+
   return (
     <UserContext.Provider value={{
       userData,
       updatePoints,
       setUserData,
+      updateHealthProfile,
       calculateLevel,
       resetUserData,
       syncWithAuth,
@@ -245,4 +311,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </UserContext.Provider>
   );
+};
+
+export const useUser = () => {
+  const context = useContext(UserContext);
+  if (context === undefined) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
+  return context;
 };
