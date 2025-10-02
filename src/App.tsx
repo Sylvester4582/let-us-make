@@ -8,12 +8,18 @@ import { UserProvider } from "@/contexts/UserContext";
 import { LeaderboardProvider } from "@/contexts/LeaderboardContext";
 import { BenefitsProvider } from "@/contexts/BenefitsContext";
 import { AIProvider } from "@/contexts/AIContext";
+import { InsuranceProvider } from "@/contexts/InsuranceContext";
+import { ChallengesProvider } from "@/contexts/ChallengesContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserSync from "@/components/UserSync";
-import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import Insurance from "./pages/Insurance";
+import Challenges from "./pages/Challenges";
+import Leaderboard from "./pages/Leaderboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import { Navigation } from "./components/Navigation";
 
 const queryClient = new QueryClient();
 
@@ -24,17 +30,49 @@ const App = () => (
         <UserSync />
         <LeaderboardProvider>
           <BenefitsProvider>
-            <AIProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
+            <InsuranceProvider>
+              <ChallengesProvider>
+                <AIProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    <BrowserRouter>
                   <Routes>
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/" element={
                       <ProtectedRoute>
-                        <Index />
+                        <Navigation>
+                          <Dashboard />
+                        </Navigation>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/dashboard" element={
+                      <ProtectedRoute>
+                        <Navigation>
+                          <Dashboard />
+                        </Navigation>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/insurance" element={
+                      <ProtectedRoute>
+                        <Navigation>
+                          <Insurance />
+                        </Navigation>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/challenges" element={
+                      <ProtectedRoute>
+                        <Navigation>
+                          <Challenges />
+                        </Navigation>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/leaderboard" element={
+                      <ProtectedRoute>
+                        <Navigation>
+                          <Leaderboard />
+                        </Navigation>
                       </ProtectedRoute>
                     } />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
@@ -43,11 +81,13 @@ const App = () => (
                 </BrowserRouter>
               </TooltipProvider>
             </AIProvider>
-          </BenefitsProvider>
-        </LeaderboardProvider>
-      </UserProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+          </ChallengesProvider>
+        </InsuranceProvider>
+      </BenefitsProvider>
+    </LeaderboardProvider>
+  </UserProvider>
+</AuthProvider>
+</QueryClientProvider>
 );
 
 export default App;

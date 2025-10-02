@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const auth = require('../middleware/auth');
 const Event = require('../models/Event');
 const User = require('../models/User');
+const Challenge = require('../models/Challenge');
 
 const router = express.Router();
 
@@ -22,7 +23,7 @@ router.post('/', auth, [
     }
 
     const { eventType, metadata } = req.body;
-    const userId = req.user.id;
+    const userId = req.userId;
 
     // Create event
     const event = await Event.create(userId, eventType, metadata);
@@ -31,7 +32,15 @@ router.post('/', auth, [
     const updatedUser = await User.updatePoints(userId, event.pointsAwarded);
 
     // Check for level up
-    const levelUp = updatedUser.level > (req.user.level || 1);
+    const levelUp = updatedUser.level > (req.user?.level || 1);
+
+    // Update challenge progress
+    const challengeMetadata = {
+      pointsAwarded: event.pointsAwarded,
+      levelUp,
+      ...metadata
+    };
+    const updatedChallenges = await Challenge.updateChallengeProgress(userId, eventType, challengeMetadata);
 
     res.json({
       success: true,
@@ -43,7 +52,8 @@ router.post('/', auth, [
         newLevel: updatedUser.level,
         unlockedPremiumDiscount: updatedUser.unlocked_premium_discount,
         discountPercentage: updatedUser.discount_percentage,
-        message: generateEventMessage(eventType, levelUp)
+        updatedChallenges,
+        message: generateEventMessage(eventType, levelUp, updatedChallenges)
       }
     });
   } catch (error) {
@@ -80,21 +90,30 @@ router.get('/history', auth, async (req, res) => {
   }
 });
 
-function generateEventMessage(eventType, levelUp) {
+function generateEventMessage(eventType, levelUp, updatedChallenges = []) {
   const messages = {
     daily_login: 'Welcome back! Keep up the streak! 🌟',
-    log_workout: 'Great workout! Your body will thank you! 💪',
+    exercise: 'Great workout! Your body will thank you! 💪',
     read_article: 'Knowledge is power! Keep learning! 📚',
     view_policy: 'Smart move checking out our policies! 🎯',
     complete_challenge: 'Challenge conquered! You\'re unstoppable! 🏆',
     invite_friend: 'Thanks for spreading the wellness! 🤝',
     share_achievement: 'Sharing is caring! 🌟',
-    use_new_feature: 'Thanks for trying something new! 🎉'
+    use_new_feature: 'Thanks for trying something new! 🎉',
+    checkup: 'Taking care of your health! 🏥',
+    health_score: 'Your health metrics are looking good! 📊'
   };
 
-  let message = messages[eventType] || 'Great job!';
+  let message = messages[eventType] || 'Great job! Every action counts! 🎯';
+  
   if (levelUp) {
-    message += ' Level Up! 🎊';
+    message += ' 🎉 LEVEL UP! You\'ve reached a new level!';
+  }
+
+  // Add challenge completion messages
+  const completedChallenges = updatedChallenges.filter(c => c.status === 'completed');
+  if (completedChallenges.length > 0) {
+    message += ` 🏆 ${completedChallenges.length} challenge(s) completed!`;
   }
 
   return message;

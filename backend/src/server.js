@@ -8,6 +8,8 @@ const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
 const leaderboardRoutes = require('./routes/leaderboard');
 const benefitsRoutes = require('./routes/benefits');
+const insuranceRoutes = require('./routes/insurance');
+const challengesRoutes = require('./routes/challenges');
 
 const app = express();
 
@@ -22,6 +24,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/benefits', benefitsRoutes);
+app.use('/api/insurance', insuranceRoutes);
+app.use('/api/challenges', challengesRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
